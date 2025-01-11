@@ -43,6 +43,7 @@ class AuthController extends Controller
                     'name' => $name,
                     'email' => $email,
                     'avatar' => $avatar,
+                    'password' => bcrypt('default_password'),
                 ]);
             }
 
