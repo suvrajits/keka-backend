@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\InstagramController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Http\Request;
@@ -16,4 +17,6 @@ Route::get('/test', function () { return response()->json(['message' => 'API is
 Route::get('/task',[TaskController::class,'index']);
 
 Route::post('/login/google', [AuthController::class, 'googleLogin']);
+
+Route::post('/upload-video', [InstagramController::class, 'uploadVideo']);
 
