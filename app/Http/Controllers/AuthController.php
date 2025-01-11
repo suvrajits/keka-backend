@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http; // ✅ Add this
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
 
@@ -30,6 +31,10 @@ class AuthController extends Controller
                 'message' => 'Token is valid',
                 'user' => $decoded,
             ]);
+        } catch (\Firebase\JWT\ExpiredException $e) {
+            return response()->json(['error' => 'Token has expired'], 401);
+        } catch (\Firebase\JWT\SignatureInvalidException $e) {
+            return response()->json(['error' => 'Invalid token signature'], 401);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
