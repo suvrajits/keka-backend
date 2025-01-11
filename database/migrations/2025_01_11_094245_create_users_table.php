@@ -10,7 +10,7 @@ class CreateUsersTable extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             if (!Schema::hasColumn('users', 'google_id')) {
-                $table->string('google_id')->unique()->nullable();
+                $table->string('google_id')->unique();
             }
             if (!Schema::hasColumn('users', 'name')) {
                 $table->string('name')->nullable();
@@ -22,7 +22,6 @@ class CreateUsersTable extends Migration
                 $table->text('avatar')->nullable();
             }
         });
-        
     }
 
     public function down()
