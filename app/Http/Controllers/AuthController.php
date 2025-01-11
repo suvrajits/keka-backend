@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http; // ✅ Add this
+use App\Models\User;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
+use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
 {
@@ -26,11 +27,34 @@ class AuthController extends Controller
             // Decode the ID token
             $decoded = JWT::decode($idToken, $publicKeys);
 
-            // Return the decoded token
+            // Extract user info from the decoded token
+            $googleId = $decoded->sub;
+            $email = $decoded->email ?? null;
+            $name = $decoded->name ?? null;
+            $avatar = $decoded->picture ?? null;
+
+            // Check if user already exists
+            $user = User::where('google_id', $googleId)->first();
+
+            if (!$user) {
+                // Create a new user if they don't exist
+                $user = User::create([
+                    'google_id' => $googleId,
+                    'name' => $name,
+                    'email' => $email,
+                    'avatar' => $avatar,
+                ]);
+            }
+
+            // Generate a token for the user
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            // Return the token and user details
             return response()->json([
-                'message' => 'Token is valid',
-                'user' => $decoded,
+                'access_token' => $token,
+                'user' => $user,
             ]);
+
         } catch (\Firebase\JWT\ExpiredException $e) {
             return response()->json(['error' => 'Token has expired'], 401);
         } catch (\Firebase\JWT\SignatureInvalidException $e) {
