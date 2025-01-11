@@ -17,42 +17,30 @@ class AuthController extends Controller
 
         $idToken = $request->id_token;
 
-        // Verify the token with Google's API
-        $response = Http::get('https://oauth2.googleapis.com/tokeninfo', [
-            'id_token' => $idToken,
-        ]);
+        try {
+            // Send a GET request to Google's tokeninfo endpoint with timeout and retry
+            $response = Http::retry(3, 100) // Retry 3 times, wait 100ms between retries
+                ->timeout(5) // Wait for a maximum of 5 seconds
+                ->get('https://oauth2.googleapis.com/tokeninfo', [
+                    'id_token' => $idToken,
+                ]);
 
-        if ($response->failed()) {
-            return response()->json(['error' => 'Invalid Google ID token'], 401);
-        }
+            // Check if the response failed
+            if ($response->failed()) {
+                return response()->json(['error' => 'Invalid Google ID token'], 401);
+            }
 
-        // Extract user information from the response
-        $googleUser = $response->json();
-        $googleId = $googleUser['sub'];
-        $email = $googleUser['email'];
-        $name = $googleUser['name'] ?? null;
-        $avatar = $googleUser['picture'] ?? null;
+            // Extract user info from the response
+            $googleUser = $response->json();
 
-        // Check if user already exists
-        $user = User::where('google_id', $googleId)->first();
-
-        if (!$user) {
-            // Create a new user if not exists
-            $user = User::create([
-                'google_id' => $googleId,
-                'name' => $name,
-                'email' => $email,
-                'avatar' => $avatar,
+            // Return the response
+            return response()->json([
+                'message' => 'Token is valid',
+                'user' => $googleUser,
             ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        // Generate a token for the user
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        // Return the token and user details
-        return response()->json([
-            'access_token' => $token,
-            'user' => $user,
-        ]);
     }
 }
