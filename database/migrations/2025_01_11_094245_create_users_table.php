@@ -8,7 +8,7 @@ class CreateUsersTable extends Migration
 {
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('google_id')->unique();
             $table->string('name')->nullable();
