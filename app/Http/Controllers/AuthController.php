@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\User;
-use Illuminate\Support\Facades\Http;
+use Firebase\JWT\JWT;
+use Firebase\JWT\JWK;
 
 class AuthController extends Controller
 {
     public function googleLogin(Request $request)
     {
-        // Validate the request
         $request->validate([
             'id_token' => 'required',
         ]);
@@ -18,29 +17,22 @@ class AuthController extends Controller
         $idToken = $request->id_token;
 
         try {
-            // Send a GET request to Google's tokeninfo endpoint with timeout and retry
-            $response = Http::retry(3, 100) // Retry 3 times, wait 100ms between retries
-                ->timeout(5) // Wait for a maximum of 5 seconds
-                ->get('https://oauth2.googleapis.com/tokeninfo', [
-                    'id_token' => $idToken,
-                ]);
+            // Fetch Google's public keys
+            $keys = json_decode(file_get_contents('https://www.googleapis.com/oauth2/v3/certs'), true);
 
-            // Check if the response failed
-            if ($response->failed()) {
-                return response()->json(['error' => 'Invalid Google ID token'], 401);
-            }
+            // Decode and validate the JWT
+            $decodedToken = JWT::decode($idToken, JWK::parseKeySet($keys), ['RS256']);
 
-            // Extract user info from the response
-            $googleUser = $response->json();
+            // Extract user info
+            $googleUser = (array) $decodedToken;
 
-            // Return the response
             return response()->json([
                 'message' => 'Token is valid',
                 'user' => $googleUser,
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json(['error' => $e->getMessage()], 401);
         }
     }
 }
