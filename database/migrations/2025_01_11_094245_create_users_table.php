@@ -8,14 +8,21 @@ class CreateUsersTable extends Migration
 {
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->string('google_id')->unique();
-            $table->string('name')->nullable();
-            $table->string('email')->nullable()->unique();
-            $table->text('avatar')->nullable();
-            $table->timestamps();
+        Schema::table('users', function (Blueprint $table) {
+            if (!Schema::hasColumn('users', 'google_id')) {
+                $table->string('google_id')->unique()->nullable();
+            }
+            if (!Schema::hasColumn('users', 'name')) {
+                $table->string('name')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'email')) {
+                $table->string('email')->nullable();
+            }
+            if (!Schema::hasColumn('users', 'avatar')) {
+                $table->text('avatar')->nullable();
+            }
         });
+        
     }
 
     public function down()
