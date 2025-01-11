@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
 use Firebase\JWT\JWT;
-use Firebase\JWT\JWK;
+use Firebase\JWT\Key;
 
 class AuthController extends Controller
 {
@@ -17,22 +18,20 @@ class AuthController extends Controller
         $idToken = $request->id_token;
 
         try {
-            // Fetch Google's public keys
-            $keys = json_decode(file_get_contents('https://www.googleapis.com/oauth2/v3/certs'), true);
+            // Replace with your public key (or fetch it dynamically from Google's JWKs URL)
+            $publicKey = "-----BEGIN PUBLIC KEY-----\nYOUR_PUBLIC_KEY_HERE\n-----END PUBLIC KEY-----";
 
-            // Decode and validate the JWT
-            $decodedToken = JWT::decode($idToken, JWK::parseKeySet($keys), ['RS256']);
+            // Decode the token
+            $decoded = JWT::decode($idToken, new Key($publicKey, 'RS256'));
 
-            // Extract user info
-            $googleUser = (array) $decodedToken;
-
+            // Return the decoded token
             return response()->json([
                 'message' => 'Token is valid',
-                'user' => $googleUser,
+                'user' => $decoded,
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 401);
+            return response()->json(['error' => $e->getMessage()], 400);
         }
     }
 }
