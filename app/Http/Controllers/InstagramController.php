@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Video;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Http; 
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
 
