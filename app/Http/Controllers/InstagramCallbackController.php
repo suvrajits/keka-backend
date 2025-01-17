@@ -9,24 +9,20 @@ class InstagramCallbackController extends Controller
 {
     public function handleCallback(Request $request)
     {
-        // ✅ Step 1: Check if there's an error in the callback
-        if ($request->has('error')) {
-            return response()->json(['error' => $request->get('error_description')], 400);
-        }
+        // Log all query parameters for debugging
+        logger('Instagram Callback Query Parameters:', $request->query());
 
-        // ✅ Step 2: Get the "code" from the request (sent by Instagram)
-        $authCode = $request->query('code');
-
-        if (!$authCode) {
+        if (!$request->has('code')) {
             return response()->json(['error' => 'Authorization code not found'], 400);
         }
 
-        // ✅ Step 3: Exchange the code for an access token
+        $authCode = $request->query('code');
+
         $response = Http::asForm()->post('https://api.instagram.com/oauth/access_token', [
             'client_id' => env('INSTAGRAM_CLIENT_ID'),
             'client_secret' => env('INSTAGRAM_CLIENT_SECRET'),
             'grant_type' => 'authorization_code',
-            'redirect_uri' => route('instagram.callback'), // Must match the registered redirect URI
+            'redirect_uri' => route('instagram.callback'),
             'code' => $authCode,
         ]);
 
@@ -34,15 +30,11 @@ class InstagramCallbackController extends Controller
             return response()->json(['error' => 'Failed to get access token'], 400);
         }
 
-        // ✅ Step 4: Extract the access token and user info
         $data = $response->json();
-        $accessToken = $data['access_token'];
-        $userId = $data['user_id'];
-
         return response()->json([
-            'message' => 'Instagram authentication successful',
-            'access_token' => $accessToken,
-            'user_id' => $userId,
+            'access_token' => $data['access_token'],
+            'user_id' => $data['user_id'],
         ]);
     }
+
 }
