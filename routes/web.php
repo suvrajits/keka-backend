@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InstagramCallbackController;
+use App\Http\Controllers\InstagramLoginController;
 
 Route::get('/hello', [App\Http\Controllers\HelloWorldController::class, 'index']);
 Route::get('/auth/callback', [AuthController::class, 'handleInstagramCallback']);
