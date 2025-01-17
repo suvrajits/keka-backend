@@ -18,4 +18,12 @@ class User extends Authenticatable
         'avatar',
         'instagram_user_id',
     ];
+
+    /**
+     * Define a one-to-many relationship with the Score model.
+     */
+    public function scores()
+    {
+        return $this->hasMany(Score::class);
+    }
 }
