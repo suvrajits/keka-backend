@@ -11,7 +11,7 @@ class LeaderboardController extends Controller
     /**
      * Submit a user's score.
      */
-    /*
+    
     public function submitScore(Request $request)
     {
         $validated = $request->validate([
@@ -31,7 +31,7 @@ class LeaderboardController extends Controller
             'score' => $score,
         ], 201);
     }
-    */
+    /*
     public function submitScore(Request $request)
     {
         // ✅ Step 1: Validate the request
@@ -87,7 +87,7 @@ class LeaderboardController extends Controller
             ], 400);
         }
     }
-
+    */
 
 
     /**
