@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InstagramCallbackController;
 use App\Http\Controllers\InstagramLoginController;
+use App\Http\Controllers\LeaderboardController;
 
 Route::get('/hello', [App\Http\Controllers\HelloWorldController::class, 'index']);
 Route::get('/auth/callback', [AuthController::class, 'handleInstagramCallback']);
@@ -12,3 +13,5 @@ Route::get('/', [App\Http\Controllers\HelloWorldController::class, 'kekaWelcomeM
 Route::get('/auth/instagram/callback', [InstagramCallbackController::class, 'handleCallback'])->name('instagram.callback');
 
 Route::get('/auth/instagram', [InstagramLoginController::class, 'redirectToInstagram'])->name('instagram.login');
+
+Route::get('/showLeaderboard', [LeaderboardController::class, 'showLeaderboard'])->name('leaderboard.show');

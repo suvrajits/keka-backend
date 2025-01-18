@@ -131,4 +131,26 @@ class LeaderboardController extends Controller
 
         return response()->json($leaderboard, 200);
     }
+
+    public function showLeaderboard()
+    {
+        $apiUrl = 'https://kekagame.com/api/leaderboard';
+        try {
+            // Fetch leaderboard data from API
+            $response = Http::get($apiUrl);
+
+            if ($response->failed()) {
+                throw new \Exception('Failed to fetch leaderboard data');
+            }
+
+            $leaderboard = $response->json();
+
+            // Return the leaderboard view with the fetched data
+            return view('leaderboard', compact('leaderboard'));
+        } catch (\Exception $e) {
+            // Handle exceptions and show an error message
+            return view('leaderboard', ['error' => $e->getMessage()]);
+        }
+    }
+
 }
