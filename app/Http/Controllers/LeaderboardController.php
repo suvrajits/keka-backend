@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Score;
 use Illuminate\Http\Request;
+use App\Models\User;
+use Firebase\JWT\JWT;
+use Firebase\JWT\JWK;
+use Illuminate\Support\Facades\Http;
 
 
 class LeaderboardController extends Controller
