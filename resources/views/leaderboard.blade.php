@@ -31,7 +31,7 @@
                             <td>{{ $index + 1 }}</td>
                             <td>{{ $entry['user']['name'] }}</td>
                             <td>{{ $entry['user']['email'] }}</td>
-                            <td>{{ $entry['total_score'] }}</td>
+                            <td>{{ $entry['score'] }}</td>
                         </tr>
                     @empty
                         <tr>
