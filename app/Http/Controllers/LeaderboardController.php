@@ -68,7 +68,6 @@ class LeaderboardController extends Controller
                 'user_id' => $user->id, // Use the ID from the validated user
                 'score' => $validated['score'],
                 'updated_at' => now(),
-                'track_id' => Str::uuid(), // Generate a unique tracking ID
             ]);
 
             // ✅ Step 5: Return a success response

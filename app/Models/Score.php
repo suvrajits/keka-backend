@@ -13,7 +13,6 @@ class Score extends Model
         'user_id',      // Foreign key linking to the users table
         'score',        // Score value
         'updated_at', // Time of score submission
-        'track_id',     // Unique identifier for this score
     ];
 
     /**
