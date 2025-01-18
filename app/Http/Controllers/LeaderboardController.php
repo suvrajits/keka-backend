@@ -34,20 +34,17 @@ class LeaderboardController extends Controller
     */
     public function submitScore(Request $request)
     {
-        // ✅ Step 1: Validate the request
-        $validated = $request->validate([
-            'id_token' => 'required', // Required Google ID token
-            'score' => 'required|integer|min:0',
-        ]);
-
         try {
+            // ✅ Step 1: Validate the request
+            $validated = $request->validate([
+                'id_token' => 'required', // Required Google ID token
+                'score' => 'required|integer|min:0',
+            ]);
+
             // ✅ Step 2: Verify the Google ID token
             $jwkResponse = Http::get('https://www.googleapis.com/oauth2/v3/certs');
             if ($jwkResponse->failed()) {
-                return response()->json([
-                    'status' => 0,
-                    'error' => 'Failed to fetch public keys',
-                ], 500);
+                throw new \Exception('Failed to fetch Google public keys', 500);
             }
 
             $publicKeys = JWK::parseKeySet($jwkResponse->json());
@@ -57,10 +54,7 @@ class LeaderboardController extends Controller
             // ✅ Step 3: Check if the user exists
             $user = User::where('google_id', $googleId)->first();
             if (!$user) {
-                return response()->json([
-                    'status' => 0,
-                    'error' => 'User not found',
-                ], 404);
+                throw new \Exception('User not found', 404);
             }
 
             // ✅ Step 4: Create a new score entry
@@ -78,15 +72,34 @@ class LeaderboardController extends Controller
                 'score' => $score, // Include the score object
             ], 201);
 
-        } catch (\Exception $e) {
-            // Handle token decoding errors or other exceptions
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
             return response()->json([
-                'status' => 0, // Failure status
-                'error' => 'Invalid ID token or server error',
-                'details' => $e->getMessage(),
-            ], 400);
+                'status' => 0,
+                'error' => 'Validation error',
+                'details' => $e->errors(), // Provide detailed validation errors
+            ], 422);
+        } catch (\Firebase\JWT\ExpiredException $e) {
+            // Handle expired token error
+            return response()->json([
+                'status' => 0,
+                'error' => 'ID token expired',
+            ], 401);
+        } catch (\Firebase\JWT\SignatureInvalidException $e) {
+            // Handle invalid token signature error
+            return response()->json([
+                'status' => 0,
+                'error' => 'Invalid ID token signature',
+            ], 401);
+        } catch (\Exception $e) {
+            // Handle any other exceptions
+            return response()->json([
+                'status' => 0,
+                'error' => $e->getMessage(),
+            ], $e->getCode() ?: 500); // Default to 500 if no code is set
         }
     }
+
 
 
 
