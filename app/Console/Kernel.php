@@ -15,7 +15,16 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('leaderboard:update')->daily();
+        // Schedule the leaderboard update command to run every minute (for testing purposes)
+        $schedule->command('leaderboard:update')
+                 ->everyMinute()
+                 ->appendOutputTo(storage_path('logs/scheduler.log'));
+
+        // Example of scheduling a simple inline task (for debugging/testing purposes)
+        $schedule->call(function () {
+            \Log::info('Scheduler is working!');
+        })->everyMinute()
+          ->appendOutputTo(storage_path('logs/test_scheduler.log'));
     }
 
     /**
@@ -25,8 +34,11 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        // Load custom commands from the Commands directory
+        $this->load(__DIR__ . '/Commands');
 
+        // Include console routes for inline Artisan commands
         require base_path('routes/console.php');
     }
 }
+
