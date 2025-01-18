@@ -12,7 +12,7 @@ class Score extends Model
     protected $fillable = [
         'user_id',      // Foreign key linking to the users table
         'score',        // Score value
-        'submitted_at', // Time of score submission
+        'updated_at', // Time of score submission
         'track_id',     // Unique identifier for this score
     ];
 
