@@ -34,6 +34,7 @@ class LeaderboardController extends Controller
     */
     public function submitScore(Request $request)
     {
+        // Validate the request
         $request->validate([
             'id_token' => 'required',
         ]);
@@ -59,8 +60,12 @@ class LeaderboardController extends Controller
 
             if (!$user) {
                 // Create a new user if they don't exist
-                return response()->json([
-                    'message' => 'user does not exist',
+                $user = User::create([
+                    'google_id' => $googleId,
+                    'name' => $name,
+                    'email' => $email,
+                    'avatar' => $avatar,
+                    'password' => bcrypt('default_password'),
                 ]);
             }
 
