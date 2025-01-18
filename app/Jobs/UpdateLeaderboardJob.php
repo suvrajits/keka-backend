@@ -21,32 +21,42 @@ class UpdateLeaderboardJob implements ShouldQueue
     public function handle()
     {
         Log::info('UpdateLeaderboardJob started');
-        // $cutoff = now()->subHours(24);
 
-        // try {
-        //     // Compute leaderboard data
-        //     $leaderboardData = DB::table('scores')
-        //         ->where('updated_at', '>=', $cutoff)
-        //         ->select('user_id', DB::raw('SUM(score) as total_score'))
-        //         ->groupBy('user_id')
-        //         ->orderByDesc('total_score')
-        //         ->get();
+        $cutoff = now()->subHours(24);
 
-        //     // Update the leaderboard table
-        //     foreach ($leaderboardData as $entry) {
-        //         DB::table('leaderboards')->updateOrInsert(
-        //             ['user_id' => $entry->user_id],
-        //             ['total_score' => $entry->total_score, 'updated_at' => now()]
-        //         );
-        //     }
-        // } catch (\Exception $e) {
-        //     Log::error('UpdateLeaderboardJob failed', [
-        //         'message' => $e->getMessage(),
-        //         'stack' => $e->getTraceAsString(),
-        //     ]);
+        try {
+            Log::info('Fetching leaderboard data');
 
-        //     // Optionally, rethrow the exception to retry the job
-        //     throw $e;
-        // }
+            $leaderboardData = DB::table('scores')
+                ->where('updated_at', '>=', $cutoff)
+                ->select('user_id', DB::raw('SUM(score) as total_score'))
+                ->groupBy('user_id')
+                ->orderByDesc('total_score')
+                ->get();
+
+            Log::info('Leaderboard data fetched', ['count' => $leaderboardData->count()]);
+
+            foreach ($leaderboardData as $entry) {
+                Log::info('Processing leaderboard entry', ['user_id' => $entry->user_id, 'total_score' => $entry->total_score]);
+
+                DB::table('leaderboards')->updateOrInsert(
+                    ['user_id' => $entry->user_id],
+                    ['total_score' => $entry->total_score, 'updated_at' => now()]
+                );
+
+                Log::info('Leaderboard entry updated', ['user_id' => $entry->user_id]);
+            }
+
+            Log::info('UpdateLeaderboardJob completed successfully');
+        } catch (\Exception $e) {
+            Log::error('UpdateLeaderboardJob failed', [
+                'message' => $e->getMessage(),
+                'stack' => $e->getTraceAsString(),
+            ]);
+
+            // Optionally, rethrow the exception to retry the job
+            throw $e;
+        }
     }
+
 }
