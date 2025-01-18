@@ -26,12 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
     })
 
     // Bind the console kernel to the application container
-    ->withBindings(function (Application $app) {
-        $app->singleton(
-            Illuminate\Contracts\Console\Kernel::class,
-            App\Console\Kernel::class
-        );
-    })
+    ->withBindings([
+        Illuminate\Contracts\Console\Kernel::class => App\Console\Kernel::class,
+    ])
 
     // Finalize the application creation
     ->create();
