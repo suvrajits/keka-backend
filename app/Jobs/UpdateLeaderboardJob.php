@@ -39,10 +39,10 @@ class UpdateLeaderboardJob implements ShouldQueue
             foreach ($leaderboardData as $entry) {
                  Log::info('Processing leaderboard entry', ['user_id' => $entry->user_id, 'total_score' => $entry->total_score]);
 
-            //     DB::table('leaderboards')->updateOrInsert(
-            //         ['user_id' => $entry->user_id],
-            //         ['total_score' => $entry->total_score, 'updated_at' => now()]
-            //     );
+                 DB::table('leaderboards')->updateOrInsert(
+                     ['user_id' => $entry->user_id],
+                     ['score' => $entry->total_score, 'updated_at' => now()]
+                 );
 
                  Log::info('Leaderboard entry updated', ['user_id' => $entry->user_id]);
             }
