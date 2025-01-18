@@ -8,7 +8,7 @@ use App\Models\User;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
 use Illuminate\Support\Facades\Http;
-
+use App\Models\Leaderboard; 
 
 
 class LeaderboardController extends Controller
