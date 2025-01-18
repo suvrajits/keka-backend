@@ -18,25 +18,33 @@ class UpdateLeaderboardJob implements ShouldQueue
      */
     public function handle()
     {
+        Log::info('UpdateLeaderboardJob started');
         $cutoff = now()->subHours(24);
 
-        // Compute leaderboard data
-        $leaderboardData = DB::table('scores')
-            ->where('updated_at', '>=', $cutoff)
-            ->select('user_id', DB::raw('SUM(score) as total_score'))
-            ->groupBy('user_id')
-            ->orderByDesc('total_score')
-            ->get();
+        try {
+            // Compute leaderboard data
+            $leaderboardData = DB::table('scores')
+                ->where('updated_at', '>=', $cutoff)
+                ->select('user_id', DB::raw('SUM(score) as total_score'))
+                ->groupBy('user_id')
+                ->orderByDesc('total_score')
+                ->get();
 
-        // Update the leaderboards table
-        foreach ($leaderboardData as $entry) {
-            DB::table('leaderboards')->updateOrInsert(
-                ['user_id' => $entry->user_id],
-                ['total_score' => $entry->total_score, 'updated_at' => now()]
-            );
+            // Update the leaderboard table
+            foreach ($leaderboardData as $entry) {
+                DB::table('leaderboards')->updateOrInsert(
+                    ['user_id' => $entry->user_id],
+                    ['total_score' => $entry->total_score, 'updated_at' => now()]
+                );
+            }
+        } catch (\Exception $e) {
+            \Log::error('UpdateLeaderboardJob failed', [
+                'message' => $e->getMessage(),
+                'stack' => $e->getTraceAsString(),
+            ]);
+
+            // Optionally, rethrow the exception to retry the job
+            throw $e;
         }
-
-        // Refresh cache
-        \Cache::put('leaderboard:daily:accumulated', $leaderboardData, now()->addMinutes(5));
     }
 }
