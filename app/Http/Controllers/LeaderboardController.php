@@ -10,6 +10,7 @@ use Firebase\JWT\JWK;
 use Illuminate\Support\Facades\Http;
 
 
+
 class LeaderboardController extends Controller
 {
     /**
@@ -105,32 +106,27 @@ class LeaderboardController extends Controller
     }
     
 
-
-
-
-    /**
-     * Fetch the leaderboard for the last 24 hours.
-     */
     public function getLeaderboard(Request $request)
     {
         $type = $request->query('type', 'accumulated'); // 'accumulated' or 'session'
-        $cutoff = now()->subHours(24);
-
-        $leaderboard = ($type === 'session')
-            ? Score::where('updated_at', '>=', $cutoff)
-                ->select('user_id', 'score', 'updated_at', 'track_id')
-                ->orderByDesc('score')
-                ->with('user:id,name,email')
-                ->get()
-            : Score::where('updated_at', '>=', $cutoff)
-                ->select('user_id', \DB::raw('SUM(score) as total_score'))
-                ->groupBy('user_id')
+    
+        // Check Redis cache first
+        $cacheKey = "leaderboard:daily:{$type}";
+        $leaderboard = \Cache::get($cacheKey);
+    
+        if (!$leaderboard) {
+            // Fallback if cache is empty
+            $leaderboard = \DB::table('leaderboards')
                 ->orderByDesc('total_score')
-                ->with('user:id,name,email')
                 ->get();
-
+    
+            // Cache the result for 5 minutes
+            \Cache::put($cacheKey, $leaderboard, now()->addMinutes(5));
+        }
+    
         return response()->json($leaderboard, 200);
     }
+    
 
     public function showLeaderboard()
     {
