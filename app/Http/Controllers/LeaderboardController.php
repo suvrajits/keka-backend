@@ -21,12 +21,12 @@ class LeaderboardController extends Controller
         $score = Score::create([
             'user_id' => $validated['user_id'],
             'score' => $validated['score'],
-            'submitted_at' => now(),
+            'updated_at' => now(),
             'track_id' => Str::uuid(),
         ]);
 
         return response()->json([
-            'message' => 'Score submitted successfully',
+            'message' => 'Score updated successfully',
             'score' => $score,
         ], 201);
     }
@@ -40,12 +40,12 @@ class LeaderboardController extends Controller
         $cutoff = now()->subHours(24);
 
         $leaderboard = ($type === 'session')
-            ? Score::where('submitted_at', '>=', $cutoff)
-                ->select('user_id', 'score', 'submitted_at', 'track_id')
+            ? Score::where('updated_at', '>=', $cutoff)
+                ->select('user_id', 'score', 'updated_at', 'track_id')
                 ->orderByDesc('score')
                 ->with('user:id,name,email')
                 ->get()
-            : Score::where('submitted_at', '>=', $cutoff)
+            : Score::where('updated_at', '>=', $cutoff)
                 ->select('user_id', \DB::raw('SUM(score) as total_score'))
                 ->groupBy('user_id')
                 ->orderByDesc('total_score')

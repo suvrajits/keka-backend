@@ -15,7 +15,7 @@ class UpdateLeaderboardCommand extends Command
     {
         $cutoff = now()->subHours(24);
 
-        $scores = Score::where('submitted_at', '>=', $cutoff)
+        $scores = Score::where('updated_at', '>=', $cutoff)
             ->select('user_id', \DB::raw('SUM(score) as total_score'))
             ->groupBy('user_id')
             ->orderByDesc('total_score')
