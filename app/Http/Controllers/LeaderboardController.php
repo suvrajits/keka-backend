@@ -108,24 +108,24 @@ class LeaderboardController extends Controller
 
     public function getLeaderboard(Request $request)
     {
-        $type = $request->query('type', 'accumulated'); // 'accumulated' or 'session'
-    
         // Check Redis cache first
+        $type = $request->query('type', 'accumulated'); // 'accumulated' or 'session'
         $cacheKey = "leaderboard:daily:{$type}";
         $leaderboard = \Cache::get($cacheKey);
-    
+
         if (!$leaderboard) {
             // Fallback if cache is empty
-            $leaderboard = \DB::table('leaderboards')
-                ->orderByDesc('total_score')
+            $leaderboard = Leaderboard::with('user:id,name,email')
+                ->orderByDesc('score')
                 ->get();
-    
+
             // Cache the result for 5 minutes
             \Cache::put($cacheKey, $leaderboard, now()->addMinutes(5));
         }
-    
+
         return response()->json($leaderboard, 200);
     }
+
     
 
     public function showLeaderboard()
