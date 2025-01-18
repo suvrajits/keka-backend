@@ -4,9 +4,21 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
+    /**
+     * Constructor to log kernel initialization.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Log when Kernel.php is loaded
+        Log::info('Kernel.php loaded successfully!');
+    }
+
     /**
      * Define the application's command schedule.
      *
@@ -15,16 +27,13 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // Schedule the leaderboard update command to run every minute (for testing purposes)
+        // Log when the scheduler runs
+        Log::info('Scheduler is running!');
+
+        // Example scheduled command
         $schedule->command('leaderboard:update')
                  ->everyMinute()
                  ->appendOutputTo(storage_path('logs/scheduler.log'));
-
-        // Example of scheduling a simple inline task (for debugging/testing purposes)
-        $schedule->call(function () {
-            \Log::info('Scheduler is working!');
-        })->everyMinute()
-          ->appendOutputTo(storage_path('logs/test_scheduler.log'));
     }
 
     /**
@@ -34,11 +43,10 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        // Load custom commands from the Commands directory
         $this->load(__DIR__ . '/Commands');
-
-        // Include console routes for inline Artisan commands
         require base_path('routes/console.php');
+
+        // Log when commands are registered
+        Log::info('Commands registered successfully in Kernel.php!');
     }
 }
-
