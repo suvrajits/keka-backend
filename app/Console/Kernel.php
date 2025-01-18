@@ -29,7 +29,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('leaderboard:update')->daily();
+        $schedule->job(new \App\Jobs\UpdateLeaderboardJob())->everyFiveMinutes();
     }
 
     /**
