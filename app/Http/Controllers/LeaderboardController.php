@@ -115,7 +115,7 @@ class LeaderboardController extends Controller
 
         if (!$leaderboard) {
             // Fallback if cache is empty
-            $leaderboard = Leaderboard::with('user:id,name,email')
+            $leaderboard = Leaderboard::with('user:id,name,email, avatar')
                 ->orderByDesc('score')
                 ->get();
 
