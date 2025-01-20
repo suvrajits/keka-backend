@@ -45,30 +45,39 @@ class LeaderboardController extends Controller
                 'id_token' => 'required', // Required Google ID token
                 'score' => 'required|integer|min:0',
             ]);
-    
+
             // ✅ Step 2: Verify the Google ID token
             $jwkResponse = Http::get('https://www.googleapis.com/oauth2/v3/certs');
             if ($jwkResponse->failed()) {
                 throw new \Exception('Failed to fetch Google public keys', 500);
             }
-    
+
             $publicKeys = JWK::parseKeySet($jwkResponse->json());
-            $decoded = JWT::decode($validated['id_token'], $publicKeys);
+
+            // Decode the token with algorithm RS256
+            $decoded = JWT::decode($validated['id_token'], $publicKeys, ['RS256']);
+            
+            // Validate audience
+            $clientId = env('GOOGLE_CLIENT_ID');
+            if ($decoded->aud !== $clientId) {
+                throw new \Exception('Invalid audience in ID token');
+            }
+
             $googleId = $decoded->sub; // Extract the Google user ID
-    
+
             // ✅ Step 3: Check if the user exists
             $user = User::where('google_id', $googleId)->first();
             if (!$user) {
                 throw new \Exception('User not found', 404);
             }
-    
+
             // ✅ Step 4: Create a new score entry
             $score = Score::create([
                 'user_id' => $user->id, // Use the ID from the validated user
                 'score' => $validated['score'],
                 'updated_at' => now(),
             ]);
-    
+
             // ✅ Step 5: Return a success response
             return response()->json([
                 'status' => 1, // Success status
@@ -76,34 +85,31 @@ class LeaderboardController extends Controller
                 'user_id' => $user->id, // Include the user ID
                 'score' => $score, // Include the score object
             ], 201);
-    
+
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // Handle validation errors
             return response()->json([
                 'status' => 0,
                 'error' => 'Validation error',
-                'details' => $e->errors(), // Provide detailed validation errors
+                'details' => $e->errors(),
             ], 422);
         } catch (\Firebase\JWT\ExpiredException $e) {
-            // Handle expired token error
             return response()->json([
                 'status' => 0,
                 'error' => 'ID token expired',
             ], 401);
         } catch (\Firebase\JWT\SignatureInvalidException $e) {
-            // Handle invalid token signature error
             return response()->json([
                 'status' => 0,
                 'error' => 'Invalid ID token signature',
             ], 401);
         } catch (\Exception $e) {
-            // Handle any other exceptions
             return response()->json([
                 'status' => 0,
                 'error' => $e->getMessage(),
-            ], $e->getCode() ?: 500); // Default to 500 if no code is set
+            ], $e->getCode() ?: 500);
         }
     }
+
     
 
     public function getLeaderboard(Request $request)
