@@ -117,26 +117,25 @@ class LeaderboardController extends Controller
             // Fallback if cache is empty
             $leaderboard = Leaderboard::with('user:id,name,email,avatar')
                 ->orderByDesc('score')
-                ->get();
-
-            // Add rank and avatar based on order
-            $leaderboard->each(function ($item, $index) {
-                $item->rank = $index + 1; // Adding rank, starting from 1
-                $item->avatar = $item->user->avatar ?? 'https://example.com/default-avatar.png'; // Set default if avatar is null
-            });
+                ->get()
+                ->map(function ($item, $index) {
+                    return [
+                        'user_id' => $item->user_id,
+                        'name' => $item->user->name,
+                        'email' => $item->user->email,
+                        'avatar' => $item->user->avatar ?? 'https://example.com/default-avatar.png',
+                        'score' => $item->score,
+                        'rank' => $index + 1,
+                    ];
+                });
 
             // Cache the result for 5 minutes
             \Cache::put($cacheKey, $leaderboard, now()->addMinutes(5));
-        } else {
-            // If leaderboard is retrieved from cache, add rank and avatar to it
-            $leaderboard = collect($leaderboard)->each(function ($item, $index) {
-                $item['rank'] = $index + 1; // Adding rank, starting from 1
-                $item['avatar'] = $item['user']['avatar'] ?? 'https://example.com/default-avatar.png';
-            });
         }
 
         return response()->json($leaderboard, 200);
     }
+
 
 
     
