@@ -1,0 +1,3 @@
+[supervisord]
+environment=HOME="/home/ec2-user",USER="ec2-user",APP_ENV="production"
+
