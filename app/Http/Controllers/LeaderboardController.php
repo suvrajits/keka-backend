@@ -119,8 +119,18 @@ class LeaderboardController extends Controller
                 ->orderByDesc('score')
                 ->get();
 
+            // Add rank based on order
+            $leaderboard->each(function ($item, $index) {
+                $item->rank = $index + 1; // Adding rank, starting from 1
+            });
+
             // Cache the result for 5 minutes
             \Cache::put($cacheKey, $leaderboard, now()->addMinutes(5));
+        } else {
+            // If leaderboard is retrieved from cache, add rank to it
+            $leaderboard = collect($leaderboard)->each(function ($item, $index) {
+                $item['rank'] = $index + 1; // Adding rank, starting from 1
+            });
         }
 
         return response()->json($leaderboard, 200);
