@@ -98,9 +98,20 @@ class LeaderboardController extends Controller
             ], 401);
         } catch (\Illuminate\Database\QueryException $e) {
             if ($e->getCode() == '23505') {
+                // Extracting detailed information
+                $errorMessage = $e->getMessage();
+        
+                // Attempt to extract the table name from the message
+                preg_match('/violates unique constraint "(.*?)"/', $errorMessage, $matches);
+                $constraintName = $matches[1] ?? 'unknown';
+        
                 return response()->json([
                     'status' => 0,
                     'error' => 'Duplicate entry. The user score already exists.',
+                    'details' => [
+                        'constraint' => $constraintName,
+                        'message' => $errorMessage
+                    ],
                 ], 400); // Use appropriate HTTP code like 400 Bad Request
             }
         
