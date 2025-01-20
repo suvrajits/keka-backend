@@ -17,6 +17,7 @@ class User extends Authenticatable
         'email',
         'avatar',
         'instagram_user_id',
+	'user_type'
     ];
 
     /**
@@ -26,4 +27,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Score::class);
     }
+
+    public function isAdmin() { return $this->user_type === 'admin';
+    }
+
+
+
+
+    public function isPlayer() { return $this->user_type === 'player';
+    }
+
 }
