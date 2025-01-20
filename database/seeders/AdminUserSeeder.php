@@ -2,16 +2,21 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class AdminUserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+    public function run()
     {
-        //
+        User::updateOrCreate(
+            ['email' => 'suvrajit@igamerjam.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('premlat@98'),
+                'user_type' => 'admin',
+            ]
+        );
     }
 }
