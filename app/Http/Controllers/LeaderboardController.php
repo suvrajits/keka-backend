@@ -96,12 +96,19 @@ class LeaderboardController extends Controller
                 'status' => 0,
                 'error' => 'Invalid ID token signature',
             ], 401);
-        } catch (\Exception $e) {
-            // Handle any other exceptions
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == '23505') {
+                return response()->json([
+                    'status' => 0,
+                    'error' => 'Duplicate entry. The user score already exists.',
+                ], 400); // Use appropriate HTTP code like 400 Bad Request
+            }
+        
             return response()->json([
                 'status' => 0,
-                'error' => $e->getMessage(),
-            ], $e->getCode() ?: 500); // Default to 500 if no code is set
+                'error' => 'Database error',
+                'details' => $e->getMessage(),
+            ], 500); // Internal Server Error
         }
     }
     
