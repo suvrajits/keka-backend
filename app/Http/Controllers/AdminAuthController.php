@@ -140,22 +140,27 @@ class AdminAuthController extends Controller
 
     public function resendVerification(Request $request)
     {
+        $request->validate([
+            'email' => 'required|email|exists:admin_users,email',
+        ], [
+            'email.exists' => 'This email is not registered in our system.',
+        ]);
+
+        // Find the user
         $admin = AdminUser::where('email', $request->email)->first();
 
-        if (!$admin) {
-            return back()->withErrors(['email' => 'No account found with this email.']);
+        if (!$admin || $admin->is_verified) {
+            return redirect()->back()->withErrors(['email' => 'User already verified or does not exist.']);
         }
 
-        if ($admin->is_verified) {
-            return redirect()->route('admin.login')->with('success', 'Your email is already verified.');
-        }
-
-        // Resend verification code
+        // Generate a new verification code
         $verificationCode = rand(100000, 999999);
         $admin->update(['verification_code' => $verificationCode]);
+
+        // Resend verification email
         Mail::to($admin->email)->send(new AdminVerificationMail($admin));
 
-        return back()->with('success', 'A new verification code has been sent to your email.');
+        return redirect()->back()->with('success', 'A new verification code has been sent to your email.');
     }
 
 

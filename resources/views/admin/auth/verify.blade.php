@@ -33,6 +33,7 @@
                 <input type="hidden" name="email" value="{{ old('email') }}">
                 <button type="submit" class="btn btn-link w-100">Resend Verification Code</button>
             </form>
+            
         </div>
     </div>
 </div>
