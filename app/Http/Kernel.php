@@ -10,6 +10,7 @@ protected $middlewareGroups = [
 
     'web' => [
         \App\Http\Middleware\Authenticate::class,
+        \App\Http\Middleware\RedirectIfNotAdmin::class,
     ],
 ];
 
