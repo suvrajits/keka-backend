@@ -22,7 +22,7 @@ class UpdateLeaderboardJob implements ShouldQueue
     {
         Log::info('UpdateLeaderboardJob started');
 
-        $cutoff = now()->subHours(24);
+        $cutoff = now()->subDays(7);
 
         try {
             Log::info('Fetching leaderboard data');
