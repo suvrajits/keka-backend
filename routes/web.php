@@ -28,7 +28,7 @@ Route::post('/admin/login', [AdminAuthController::class, 'login']);
 Route::middleware('auth:admin')->group(function () {
     Route::get('/admin/profile', [AdminProfileController::class, 'index'])->name('admin.profile');
     Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users');
-    Route::get('/admin/leaderboards', [LeaderboardController::class, 'index'])->name('admin.leaderboards');
+    Route::get('/admin/leaderboards', [LeaderboardController::class, 'showLeaderboard'])->name('admin.leaderboards');
     Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
     Route::get('/admin', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 });
