@@ -7,6 +7,10 @@ protected $middlewareGroups = [
         'throttle:api',
         \Illuminate\Routing\Middleware\SubstituteBindings::class,
     ],
+
+    'web' => [
+        \App\Http\Middleware\Authenticate::class,
+    ],
 ];
 
 protected $routeMiddleware = [
