@@ -6,6 +6,7 @@ use App\Http\Controllers\InstagramCallbackController;
 use App\Http\Controllers\InstagramLoginController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\AdminAuthController;
+use App\Http\Controllers\AdminDashboardController;
 
 Route::get('/hello', [App\Http\Controllers\HelloWorldController::class, 'index']);
 Route::get('/auth/callback', [AuthController::class, 'handleInstagramCallback']);
@@ -28,4 +29,5 @@ Route::middleware('auth:admin')->group(function () {
     //Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users');
     //Route::get('/admin/leaderboards', [AdminLeaderboardController::class, 'index'])->name('admin.leaderboards');
     Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
+    Route::get('/admin', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 });
