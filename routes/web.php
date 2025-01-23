@@ -7,6 +7,8 @@ use App\Http\Controllers\InstagramLoginController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminProfileController;
+use App\Http\Controllers\AdminUserController;
 
 Route::get('/hello', [App\Http\Controllers\HelloWorldController::class, 'index']);
 Route::get('/auth/callback', [AuthController::class, 'handleInstagramCallback']);
@@ -24,10 +26,9 @@ Route::post('/admin/login', [AdminAuthController::class, 'login']);
 
 // Protected Admin Routes (requires authentication)
 Route::middleware('auth:admin')->group(function () {
-    //Route::get('/admin', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
-    //Route::get('/admin/profile', [AdminProfileController::class, 'index'])->name('admin.profile');
-    //Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users');
-    //Route::get('/admin/leaderboards', [AdminLeaderboardController::class, 'index'])->name('admin.leaderboards');
+    Route::get('/admin/profile', [AdminProfileController::class, 'index'])->name('admin.profile');
+    Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users');
+    Route::get('/admin/leaderboards', [LeaderboardController::class, 'index'])->name('admin.leaderboards');
     Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
     Route::get('/admin', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
 });
