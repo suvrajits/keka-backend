@@ -50,25 +50,48 @@ class AdminAuthController extends Controller
 
     public function register(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:admin_users,email',
-            'password' => 'required|min:8|confirmed',
-        ]);
+        try {
+            // Validate the input
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:admin_users,email',
+                'password' => 'required|min:8|confirmed',
+            ], [
+                'email.unique' => 'The email has already been registered. Please try logging in or reset your password.',
+                'password.min' => 'Password must be at least 8 characters long.',
+                'password.confirmed' => 'Password confirmation does not match.',
+            ]);
 
-        $verificationCode = rand(100000, 999999);
+            // Generate a 6-digit verification code
+            $verificationCode = rand(100000, 999999);
 
-        $admin = AdminUser::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'verification_code' => $verificationCode,
-        ]);
+            // Create the admin user
+            $admin = AdminUser::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'verification_code' => $verificationCode,
+            ]);
 
-        Mail::to($admin->email)->send(new AdminVerificationMail($admin));
+            // Send verification email
+            Mail::to($admin->email)->send(new AdminVerificationMail($admin));
 
-        return redirect()->route('admin.verify')->with('success', 'A verification code has been sent to your email.');
+            return redirect()->route('admin.verify')
+                ->with('success', 'A verification code has been sent to your email.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Return validation errors with input data
+            return redirect()->back()
+                ->withErrors($e->errors())
+                ->withInput();
+        } catch (\Exception $e) {
+            // Handle unexpected errors
+            return redirect()->back()
+                ->withErrors(['error' => 'An unexpected error occurred. Please try again later.'])
+                ->withInput();
+        }
     }
+
+
 
     public function showVerificationForm()
     {
