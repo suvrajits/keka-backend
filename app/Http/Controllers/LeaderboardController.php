@@ -172,10 +172,10 @@ class LeaderboardController extends Controller
             $leaderboard = $response->json();
 
             // Return the leaderboard view with the fetched data
-            return view('leaderboard', compact('admin.leaderboard'));
+            return view('admin.leaderboard', compact('admin.leaderboard'));
         } catch (\Exception $e) {
             // Handle exceptions and show an error message
-            return view('leaderboard', ['error' => $e->getMessage()]);
+            return view('admin.leaderboard', ['error' => $e->getMessage()]);
         }
     }
 
