@@ -11,6 +11,10 @@
     <div class="card shadow-lg p-4" style="width: 400px;">
         <h2 class="text-center mb-4">Admin Login</h2>
         
+        @if(session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
+
         @if($errors->any())
             <div class="alert alert-danger">{{ $errors->first() }}</div>
         @endif
@@ -29,6 +33,16 @@
 
             <button type="submit" class="btn btn-primary w-100">Login</button>
         </form>
+
+        <div class="mt-3 text-center">
+            <a href="{{ route('admin.register') }}" class="text-decoration-none">Register as Admin</a>
+        </div>
+
+        @if(session('resend_verification'))
+            <div class="mt-2 text-center">
+                <a href="{{ session('resend_verification') }}" class="text-decoration-none">Resend Verification Code</a>
+            </div>
+        @endif
     </div>
 
 </body>

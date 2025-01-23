@@ -26,17 +26,34 @@ class AdminAuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required|min:8',
         ]);
 
-        $credentials = $request->only('email', 'password');
+        $admin = AdminUser::where('email', $request->email)->first();
 
-        if (Auth::guard('admin')->attempt($credentials)) {
+        if (!$admin) {
+            return back()->withErrors(['email' => 'No account found with this email.']);
+        }
+
+        // Check if email is verified
+        if (!$admin->is_verified) {
+            return back()->withErrors(['email' => 'Your email is not verified. Please verify your email.'])
+                ->with('resend_verification', route('admin.resend_verification', ['email' => $request->email]));
+        }
+
+        // Check if approved by super admin
+        if (!$admin->is_approved) {
+            return back()->withErrors(['email' => 'Your account has not been approved by the super admin. Please wait for approval.']);
+        }
+
+        // Attempt login
+        if (Auth::guard('admin')->attempt($request->only('email', 'password'))) {
             return redirect()->route('admin.dashboard');
         }
 
-        return back()->withErrors(['email' => 'Invalid credentials']);
+        return back()->withErrors(['email' => 'Invalid credentials.']);
     }
+
 
     /**
      * Handle admin logout.
@@ -121,24 +138,24 @@ class AdminAuthController extends Controller
         return back()->withErrors(['verification_code' => 'Invalid verification code.']);
     }
 
-    public function resendVerificationCode(Request $request)
+    public function resendVerification(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email|exists:admin_users,email',
-        ]);
-
         $admin = AdminUser::where('email', $request->email)->first();
 
-        if ($admin && !$admin->is_verified) {
-            $admin->verification_code = rand(100000, 999999);
-            $admin->save();
-
-            Mail::to($admin->email)->send(new AdminVerificationMail($admin));
-
-            return back()->with('success', 'A new verification code has been sent to your email.');
+        if (!$admin) {
+            return back()->withErrors(['email' => 'No account found with this email.']);
         }
 
-        return back()->withErrors(['email' => 'Invalid email or user already verified.']);
+        if ($admin->is_verified) {
+            return redirect()->route('admin.login')->with('success', 'Your email is already verified.');
+        }
+
+        // Resend verification code
+        $verificationCode = rand(100000, 999999);
+        $admin->update(['verification_code' => $verificationCode]);
+        Mail::to($admin->email)->send(new AdminVerificationMail($admin));
+
+        return back()->with('success', 'A new verification code has been sent to your email.');
     }
 
 

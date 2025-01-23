@@ -39,4 +39,4 @@ Route::post('admin/register', [AdminAuthController::class, 'register']);
 
 Route::get('admin/verify', [AdminAuthController::class, 'showVerificationForm'])->name('admin.verify');
 Route::post('admin/verify', [AdminAuthController::class, 'verify']);
-Route::post('admin/resend', [AdminAuthController::class, 'resendVerificationCode'])->name('admin.resend');
+Route::get('/admin/resend-verification', [AdminAuthController::class, 'resendVerification'])->name('admin.resend_verification');
