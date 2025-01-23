@@ -2,20 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class AdminUser extends Authenticatable
 {
-    use HasFactory;
+    use Notifiable;
 
     protected $fillable = [
-        'name',
-        'email',
-        'password',
+        'name', 'email', 'password', 'verification_code', 'is_verified', 'is_approved', 'access_level'
     ];
 
     protected $hidden = [
-        'password',
+        'password', 'verification_code',
     ];
 }
