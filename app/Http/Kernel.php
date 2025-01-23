@@ -9,3 +9,7 @@ protected $middlewareGroups = [
     ],
 ];
 
+protected $routeMiddleware = [
+    'auth.admin' => \App\Http\Middleware\RedirectIfNotAdmin::class,
+];
+

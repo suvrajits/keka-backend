@@ -55,6 +55,10 @@
     </style>
 </head>
 <body>
+
+    {{-- Include the admin header --}}
+    @include('layouts.header')
+
     <div class="leaderboard-container">
         <h1 class="leaderboard-title">🏆 Leaderboard</h1>
         <hr>
@@ -95,5 +99,7 @@
             </table>
         @endif
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
