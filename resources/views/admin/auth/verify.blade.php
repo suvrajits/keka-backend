@@ -28,11 +28,12 @@
 
             <hr>
 
-            <form method="POST" action="{{ route('admin.verify') }}">
+            <form method="POST" action="{{ route('admin.resend_verification') }}">
                 @csrf
                 <input type="hidden" name="email" value="{{ old('email') }}">
                 <button type="submit" class="btn btn-link w-100">Resend Verification Code</button>
             </form>
+            
             
         </div>
     </div>
