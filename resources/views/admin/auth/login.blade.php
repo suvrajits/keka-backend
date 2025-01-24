@@ -38,6 +38,10 @@
             <a href="{{ route('admin.register') }}" class="text-decoration-none">Register as Admin</a>
         </div>
 
+        <div class="mt-2 text-center">
+            <a href="{{ route('admin.verify') }}" class="text-decoration-none">Verify Your Email</a>
+        </div>
+
         @if(session('resend_verification'))
             <div class="mt-2 text-center">
                 <a href="{{ session('resend_verification') }}" class="text-decoration-none">Resend Verification Code</a>
