@@ -5,23 +5,22 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\AdminUser;
 
 class AdminVerificationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $admin;
+    public $code;
 
-    public function __construct($verificationCode)
+    public function __construct($code)
     {
-        $this->verificationCode = $verificationCode;
+        $this->code = $code;
     }
 
     public function build()
     {
         return $this->subject('Your Verification Code')
-                    ->view('emails.verification')
-                    ->with(['code' => $this->verificationCode]);
+                    ->view('emails.admin_verification')
+                    ->with(['code' => $this->code]);
     }
 }
