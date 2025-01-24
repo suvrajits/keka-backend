@@ -13,15 +13,15 @@ class AdminVerificationMail extends Mailable
 
     public $admin;
 
-    public function __construct(AdminUser $admin)
+    public function __construct($verificationCode)
     {
-        $this->admin = $admin;
+        $this->verificationCode = $verificationCode;
     }
 
     public function build()
     {
-        return $this->subject('Admin Verification Code')
-                    ->view('emails.admin_verification')
-                    ->with(['verification_code' => $this->admin->verification_code]);
+        return $this->subject('Your Verification Code')
+                    ->view('emails.verification')
+                    ->with(['code' => $this->verificationCode]);
     }
 }

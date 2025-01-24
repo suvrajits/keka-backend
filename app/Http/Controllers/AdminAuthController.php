@@ -95,7 +95,7 @@ class AdminAuthController extends Controller
             ]);
 
             // Send verification email
-            Mail::to($admin->email)->send(new AdminVerificationMail($admin));
+            Mail::to($admin->email)->send(new AdminVerificationMail($verificationCode));
 
             return redirect()->route('admin.verify')
                 ->with('success', 'A verification code has been sent to your email.');
