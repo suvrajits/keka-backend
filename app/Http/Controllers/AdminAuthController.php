@@ -126,17 +126,20 @@ class AdminAuthController extends Controller
             'verification_code' => 'required|numeric'
         ]);
 
-        $admin = AdminUser::where('email', $request->email)
-            ->where('verification_code', $request->verification_code)
-            ->first();
+        $admin = AdminUser::where('email', $request->email)->first();
 
-        if ($admin) {
+        if ($admin && $admin->is_verified) {
+            return redirect()->route('admin.verify')->with('already_verified', true);
+        }
+
+        if ($admin && $admin->verification_code == $request->verification_code) {
             $admin->update(['is_verified' => true, 'verification_code' => null]);
             return redirect()->route('admin.login')->with('success', 'Verification successful. Await admin approval.');
         }
 
         return back()->withErrors(['verification_code' => 'Invalid verification code.']);
     }
+
 
     public function resendVerification(Request $request)
     {

@@ -27,28 +27,37 @@
                 </div>
             @endif
 
-            <form method="POST" action="{{ route('admin.verify') }}">
-                @csrf
-                <div class="mb-3">
-                    <label>Email</label>
-                    <input type="email" class="form-control" name="email" value="{{ old('email') }}" required>
-                </div>
+            @if(session('already_verified'))
+                <div class="alert alert-info">You are already verified. Redirecting to login...</div>
+                <script>
+                    setTimeout(function(){
+                        window.location.href = "{{ route('admin.login') }}";
+                    }, 3000); // Redirect after 3 seconds
+                </script>
+            @else
+                <form method="POST" action="{{ route('admin.verify') }}">
+                    @csrf
+                    <div class="mb-3">
+                        <label>Email</label>
+                        <input type="email" class="form-control" name="email" value="{{ old('email') }}" required>
+                    </div>
 
-                <div class="mb-3">
-                    <label>Verification Code</label>
-                    <input type="text" class="form-control" name="verification_code" value="{{ old('verification_code') }}" required>
-                </div>
+                    <div class="mb-3">
+                        <label>Verification Code</label>
+                        <input type="text" class="form-control" name="verification_code" value="{{ old('verification_code') }}" required>
+                    </div>
 
-                <button type="submit" class="btn btn-success w-100">Verify</button>
-            </form>
+                    <button type="submit" class="btn btn-success w-100">Verify</button>
+                </form>
 
-            <hr>
+                <hr>
 
-            <form method="POST" action="{{ route('admin.resend_verification') }}">
-                @csrf
-                <input type="hidden" name="email" value="{{ old('email') }}">
-                <button type="submit" class="btn btn-link w-100">Resend Verification Code</button>
-            </form>
+                <form method="POST" action="{{ route('admin.resend_verification') }}">
+                    @csrf
+                    <input type="hidden" name="email" value="{{ old('email') }}">
+                    <button type="submit" class="btn btn-link w-100">Resend Verification Code</button>
+                </form>
+            @endif
         </div>
     </div>
 </div>
