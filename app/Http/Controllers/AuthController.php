@@ -34,7 +34,7 @@ class AuthController extends Controller
             $name = $decoded->name ?? null;
             $avatar = $decoded->picture ?? null;
 
-            // Check if user already exists
+            // Check if the user already exists
             $user = User::where('google_id', $googleId)->first();
 
             if (!$user) {
@@ -47,7 +47,7 @@ class AuthController extends Controller
                     'password' => bcrypt('default_password'),
                 ]);
 
-                // Initialize player progression when a new user is created
+                // Initialize player progression for new user
                 PlayerProgression::create([
                     'player_id' => $user->id,
                     'level' => 1,
@@ -57,11 +57,18 @@ class AuthController extends Controller
                 ]);
             }
 
-            // Fetch player progression data
+            // Check if player progression exists; create it if missing
             $progression = PlayerProgression::where('player_id', $user->id)->first();
 
             if (!$progression) {
-                return response()->json(['error' => 'Player progression not found.'], 404);
+                // Create a new player progression entry if it doesn't exist for the existing user
+                $progression = PlayerProgression::create([
+                    'player_id' => $user->id,
+                    'level' => 1,
+                    'current_xp' => 0,
+                    'tracks_unlocked' => json_encode([]),
+                    'skills_acquired' => json_encode([]),
+                ]);
             }
 
             // Generate a token for the user
@@ -94,6 +101,7 @@ class AuthController extends Controller
             return response()->json(['status' => 0, 'error' => $e->getMessage()], 400);
         }
     }
+
 
 
     public function handleInstagramCallback(Request $request)
