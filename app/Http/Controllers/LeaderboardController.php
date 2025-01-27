@@ -128,13 +128,18 @@ class LeaderboardController extends Controller
     {
         // Check Redis cache first
         $type = $request->query('type', 'accumulated'); // 'accumulated' or 'session'
-        $cacheKey = "leaderboard:daily:{$type}";
+        $cacheKey = "leaderboard:weekly:{$type}";
         $leaderboard = \Cache::get($cacheKey);
 
         if (!$leaderboard) {
-            // Fallback if cache is empty
-            $leaderboard = Leaderboard::with('user:id,name,email,avatar')
-                ->orderByDesc('score')
+            // Get scores accumulated over the last 7 days
+            $oneWeekAgo = now()->subDays(7);
+
+            $leaderboard = Leaderboard::where('created_at', '>=', $oneWeekAgo)
+                ->with('user:id,name,email,avatar')
+                ->selectRaw('user_id, SUM(score) as total_score')
+                ->groupBy('user_id')
+                ->orderByDesc('total_score')
                 ->get()
                 ->map(function ($item, $index) {
                     return [
@@ -142,7 +147,7 @@ class LeaderboardController extends Controller
                         'name' => $item->user->name,
                         'email' => $item->user->email,
                         'avatar' => $item->user->avatar ?? 'https://example.com/default-avatar.png',
-                        'score' => $item->score,
+                        'score' => $item->total_score,
                         'rank' => $index + 1,
                     ];
                 });
@@ -153,6 +158,7 @@ class LeaderboardController extends Controller
 
         return response()->json($leaderboard, 200);
     }
+
 
 
 
