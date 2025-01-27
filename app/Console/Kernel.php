@@ -29,7 +29,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        // Update leaderboard scores every minute
         $schedule->command('leaderboard:update')->everyMinute();
+
+        // Reset leaderboard every Sunday at midnight
+        $schedule->command('leaderboard:reset')->sundays()->at('00:00');
     }
 
     /**

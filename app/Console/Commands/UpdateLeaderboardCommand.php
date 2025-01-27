@@ -9,11 +9,11 @@ use App\Models\Leaderboard;
 class UpdateLeaderboardCommand extends Command
 {
     protected $signature = 'leaderboard:update';
-    protected $description = 'Update the leaderboard based on scores from the last 24 hours';
+    protected $description = 'Update the leaderboard based on scores from the last 7 days';
 
     public function handle()
     {
-        $cutoff = now()->subHours(24);
+        $cutoff = now()->subDays(7);
 
         $scores = Score::where('updated_at', '>=', $cutoff)
             ->select('user_id', \DB::raw('SUM(score) as total_score'))
