@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\PlayerProgression;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
 use Illuminate\Support\Facades\Http;
@@ -45,25 +46,55 @@ class AuthController extends Controller
                     'avatar' => $avatar,
                     'password' => bcrypt('default_password'),
                 ]);
+
+                // Initialize player progression when a new user is created
+                PlayerProgression::create([
+                    'player_id' => $user->id,
+                    'level' => 1,
+                    'current_xp' => 0,
+                    'tracks_unlocked' => json_encode([]),
+                    'skills_acquired' => json_encode([]),
+                ]);
+            }
+
+            // Fetch player progression data
+            $progression = PlayerProgression::where('player_id', $user->id)->first();
+
+            if (!$progression) {
+                return response()->json(['error' => 'Player progression not found.'], 404);
             }
 
             // Generate a token for the user
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            // Return the token and user details
+            // Return the token, user details, and player progression
             return response()->json([
+                'status' => 1,
                 'access_token' => $token,
-                'user' => $user,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'avatar' => $user->avatar,
+                    'google_id' => $user->google_id,
+                ],
+                'player_progression' => [
+                    'level' => $progression->level,
+                    'current_xp' => $progression->current_xp,
+                    'tracks_unlocked' => json_decode($progression->tracks_unlocked),
+                    'skills_acquired' => json_decode($progression->skills_acquired),
+                ],
             ]);
 
         } catch (\Firebase\JWT\ExpiredException $e) {
-            return response()->json(['error' => 'Token has expired'], 401);
+            return response()->json(['status' => 0, 'error' => 'Token has expired'], 401);
         } catch (\Firebase\JWT\SignatureInvalidException $e) {
-            return response()->json(['error' => 'Invalid token signature'], 401);
+            return response()->json(['status' => 0, 'error' => 'Invalid token signature'], 401);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return response()->json(['status' => 0, 'error' => $e->getMessage()], 400);
         }
     }
+
 
     public function handleInstagramCallback(Request $request)
     {
