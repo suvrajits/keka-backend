@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('player_progressions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('player_id')->constrained()->onDelete('cascade');
+            $table->foreignId('player_id')->constrained('users')->onDelete('cascade'); 
             $table->integer('level')->default(1);
             $table->integer('current_xp')->default(0);
             $table->json('tracks_unlocked')->nullable();
