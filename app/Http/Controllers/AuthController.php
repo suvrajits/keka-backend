@@ -18,63 +18,17 @@ class AuthController extends Controller
             'id_token' => 'required',
         ]);
 
-        $idToken = $request->id_token;
-
         try {
-            // Fetch Google's public keys (JWKs)
-            $jwkResponse = Http::get('https://www.googleapis.com/oauth2/v3/certs');
-            $publicKeys = JWK::parseKeySet($jwkResponse->json());
+            // Authenticate user and retrieve user data
+            $user = $this->authenticateGoogleUser($request->id_token);
 
-            // Decode the ID token
-            $decoded = JWT::decode($idToken, $publicKeys);
+            // Ensure player progression exists
+            $progression = $this->getOrCreatePlayerProgression($user->id);
 
-            // Extract user info from the decoded token
-            $googleId = $decoded->sub;
-            $email = $decoded->email ?? null;
-            $name = $decoded->name ?? null;
-            $avatar = $decoded->picture ?? null;
-
-            // Check if the user already exists
-            $user = User::where('google_id', $googleId)->first();
-
-            if (!$user) {
-                // Create a new user if they don't exist
-                $user = User::create([
-                    'google_id' => $googleId,
-                    'name' => $name,
-                    'email' => $email,
-                    'avatar' => $avatar,
-                    'password' => bcrypt('default_password'),
-                ]);
-
-                // Initialize player progression for new user
-                PlayerProgression::create([
-                    'player_id' => $user->id,
-                    'level' => 1,
-                    'current_xp' => 0,
-                    'tracks_unlocked' => json_encode([]),
-                    'skills_acquired' => json_encode([]),
-                ]);
-            }
-
-            // Check if player progression exists; create it if missing
-            $progression = PlayerProgression::where('player_id', $user->id)->first();
-
-            if (!$progression) {
-                // Create a new player progression entry if it doesn't exist for the existing user
-                $progression = PlayerProgression::create([
-                    'player_id' => $user->id,
-                    'level' => 1,
-                    'current_xp' => 0,
-                    'tracks_unlocked' => json_encode([]),
-                    'skills_acquired' => json_encode([]),
-                ]);
-            }
-
-            // Generate a token for the user
+            // Generate auth token
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            // Return the token, user details, and player progression
+            // Return the response
             return response()->json([
                 'status' => 1,
                 'access_token' => $token,
@@ -92,7 +46,6 @@ class AuthController extends Controller
                     'skills_acquired' => json_decode($progression->skills_acquired),
                 ],
             ]);
-
         } catch (\Firebase\JWT\ExpiredException $e) {
             return response()->json(['status' => 0, 'error' => 'Token has expired'], 401);
         } catch (\Firebase\JWT\SignatureInvalidException $e) {
@@ -101,6 +54,62 @@ class AuthController extends Controller
             return response()->json(['status' => 0, 'error' => $e->getMessage()], 400);
         }
     }
+
+    /**
+     * Authenticate user with Google ID token and retrieve/create the user.
+     */
+    private function authenticateGoogleUser($idToken)
+    {
+        // Fetch Google's public keys (JWKs)
+        $jwkResponse = Http::get('https://www.googleapis.com/oauth2/v3/certs');
+        $publicKeys = JWK::parseKeySet($jwkResponse->json());
+
+        // Decode the ID token
+        $decoded = JWT::decode($idToken, $publicKeys);
+
+        // Extract user info from the decoded token
+        $googleId = $decoded->sub;
+        $email = $decoded->email ?? null;
+        $name = $decoded->name ?? null;
+        $avatar = $decoded->picture ?? null;
+
+        // Check if the user already exists
+        $user = User::where('google_id', $googleId)->first();
+
+        if (!$user) {
+            // Create a new user if they don't exist
+            $user = User::create([
+                'google_id' => $googleId,
+                'name' => $name,
+                'email' => $email,
+                'avatar' => $avatar,
+                'password' => bcrypt('default_password'),
+            ]);
+        }
+
+        return $user;
+    }
+
+    /**
+     * Get or create player progression data for a user.
+     */
+    private function getOrCreatePlayerProgression($playerId)
+    {
+        $progression = PlayerProgression::where('player_id', $playerId)->first();
+
+        if (!$progression) {
+            $progression = PlayerProgression::create([
+                'player_id' => $playerId,
+                'level' => 1,
+                'current_xp' => 0,
+                'tracks_unlocked' => json_encode([]),
+                'skills_acquired' => json_encode([]),
+            ]);
+        }
+
+        return $progression;
+    }
+
 
 
 
