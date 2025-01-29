@@ -38,8 +38,6 @@ class PlayerProgressionController extends Controller
         $validated = $request->validate([
             'player_id' => 'required|exists:players,id',
             'xp_gained' => 'required|integer|min:0',
-            'new_track' => 'nullable|string',
-            'new_skill' => 'nullable|string',
         ]);
 
         $progression = PlayerProgression::where('player_id', $validated['player_id'])->first();
