@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Level;
 use App\Models\PlayerProgression;
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
@@ -96,17 +97,25 @@ class AuthController extends Controller
     private function getOrCreatePlayerProgression($playerId)
     {
         $progression = PlayerProgression::where('player_id', $playerId)->first();
-
+    
         if (!$progression) {
+            // Get Level 1 details
+            $levelOne = Level::where('level', 1)->first();
+    
+            // Extract default track and skill from Level 1
+            $defaultTrack = $levelOne->track_name ? [$levelOne->track_name] : [];
+            $defaultSkill = $levelOne->skill_name ? [$levelOne->skill_name] : [];
+    
+            // Create a new progression entry with Level 1 defaults
             $progression = PlayerProgression::create([
                 'player_id' => $playerId,
                 'level' => 1,
                 'current_xp' => 0,
-                'tracks_unlocked' => json_encode([]),
-                'skills_acquired' => json_encode([]),
+                'tracks_unlocked' => json_encode($defaultTrack), // Set default track(s) if available
+                'skills_acquired' => json_encode($defaultSkill), // Set default skill(s) if available
             ]);
         }
-
+    
         return $progression;
     }
 
