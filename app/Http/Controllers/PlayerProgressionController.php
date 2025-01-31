@@ -36,7 +36,7 @@ class PlayerProgressionController extends Controller
     public function updateXP(Request $request)
     {
         $validated = $request->validate([
-            'player_id' => 'required|exists:players,id',
+            'player_id' => 'required|exists:users,id',
             'xp_gained' => 'required|integer|min:0',
         ]);
 
