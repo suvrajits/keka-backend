@@ -10,13 +10,11 @@ class PlayerProgressionSeeder extends Seeder
 {
     public function run()
     {
-        // Fetch player progressions where tracks & skills are empty JSON arrays
-        $progressionsToUpdate = PlayerProgression::whereRaw("tracks_unlocked::text = '[]'::text")
-            ->whereRaw("skills_acquired::text = '[]'::text")
-            ->get();
+        // Fetch all player progressions (No empty check, always updating)
+        $progressionsToUpdate = PlayerProgression::all();
 
         if ($progressionsToUpdate->isEmpty()) {
-            $this->command->info('No player progressions needed updates.');
+            $this->command->info('No player progressions found.');
             return;
         }
 
@@ -44,7 +42,7 @@ class PlayerProgressionSeeder extends Seeder
                 }
             }
 
-            // Update the player's progression
+            // Update the player's progression (Ensure JSON format for PostgreSQL)
             $progression->update([
                 'tracks_unlocked' => json_encode($tracksUnlocked),
                 'skills_acquired' => json_encode($skillsAcquired),
