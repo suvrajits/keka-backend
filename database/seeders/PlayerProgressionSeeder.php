@@ -10,19 +10,17 @@ class PlayerProgressionSeeder extends Seeder
 {
     public function run()
     {
-        // Get all player progressions where tracks & skills are empty arrays
-        $progressionsToUpdate = PlayerProgression::where('tracks_unlocked', '[]')
-            ->where('skills_acquired', '[]')
+        // Fetch player progressions where tracks & skills are empty JSON arrays
+        $progressionsToUpdate = PlayerProgression::whereRaw("tracks_unlocked::text = '[]'::text")
+            ->whereRaw("skills_acquired::text = '[]'::text")
             ->get();
 
-        // If no records need updates, exit
         if ($progressionsToUpdate->isEmpty()) {
             $this->command->info('No player progressions needed updates.');
             return;
         }
 
         foreach ($progressionsToUpdate as $progression) {
-            // Get the player's current level
             $playerLevel = $progression->level;
 
             // Fetch all levels up to and including the player's level
@@ -33,15 +31,15 @@ class PlayerProgressionSeeder extends Seeder
                 continue;
             }
 
-            // Accumulate all tracks and skills up to the player's level
+            // Accumulate tracks & skills
             $tracksUnlocked = [];
             $skillsAcquired = [];
 
             foreach ($levels as $level) {
-                if ($level->track_name && !in_array($level->track_name, $tracksUnlocked)) {
+                if (!empty($level->track_name) && !in_array($level->track_name, $tracksUnlocked)) {
                     $tracksUnlocked[] = $level->track_name;
                 }
-                if ($level->skill_name && !in_array($level->skill_name, $skillsAcquired)) {
+                if (!empty($level->skill_name) && !in_array($level->skill_name, $skillsAcquired)) {
                     $skillsAcquired[] = $level->skill_name;
                 }
             }
