@@ -12,83 +12,53 @@ use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
 {
-    public function updateXP(Request $request)
+    public function googleLogin(Request $request)
     {
-        $validated = $request->validate([
-            'player_id' => 'required|exists:users,id',
-            'xp_gained' => 'required|integer|min:0',
+        // Validate the request
+        $request->validate([
+            'id_token' => 'required',
         ]);
 
-        $progression = PlayerProgression::where('player_id', $validated['player_id'])->first();
+        try {
+            // Authenticate user and retrieve user data
+            $user = $this->authenticateGoogleUser($request->id_token);
 
-        if (!$progression) {
-            return response()->json(['status' => 0, 'message' => 'Player progression not found.'], 404);
+            // Ensure player progression exists
+            $progression = $this->getOrCreatePlayerProgression($user->id);
+
+            // Fetch the current level's xfactor
+            $currentLevelData = Level::where('level', $progression->level)->first();
+            $currentXFactor = $currentLevelData ? $currentLevelData->xfactor : null;
+
+            // Generate auth token
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            // Return the response with xfactor included
+            return response()->json([
+                'status' => 1,
+                'access_token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'avatar' => $user->avatar,
+                    'google_id' => $user->google_id,
+                ],
+                'player_progression' => [
+                    'level' => $progression->level,
+                    'current_xp' => $progression->current_xp,
+                    'tracks_unlocked' => json_decode($progression->tracks_unlocked),
+                    'skills_acquired' => json_decode($progression->skills_acquired),
+                    'xfactor' => $currentXFactor, // ✅ Added xfactor to response
+                ],
+            ]);
+        } catch (\Firebase\JWT\ExpiredException $e) {
+            return response()->json(['status' => 0, 'error' => 'Token has expired'], 401);
+        } catch (\Firebase\JWT\SignatureInvalidException $e) {
+            return response()->json(['status' => 0, 'error' => 'Invalid token signature'], 401);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 0, 'error' => $e->getMessage()], 400);
         }
-
-        $currentLevel = Level::where('level', $progression->level)->first();
-        $adjustedXP = $validated['xp_gained'] * $currentLevel->xfactor;
-        $progression->current_xp += (int)$adjustedXP;
-
-        $isLevelup = 0; // Default: No level-up
-        $newTrack = null;
-        $newSkill = null;
-        $newXFactor = null; // XFactor of the new level
-
-        // Fetch next level XP requirement (whether level-up happens or not)
-        $nextLevelXP = Level::where('level', $progression->level + 1)->value('xp_required');
-
-        // Check for level-up
-        while ($nextLevel = Level::where('level', $progression->level + 1)->first()) {
-            if ($progression->current_xp >= $nextLevel->xp_required) {
-                $progression->current_xp -= $nextLevel->xp_required;
-                $progression->level = $nextLevel->level;
-                $isLevelup = 1; // Level-up happened
-
-                // Update next level XP for the next possible level-up
-                $nextLevelXP = Level::where('level', $progression->level + 1)->value('xp_required');
-
-                // Store new XFactor of the level-up
-                $newXFactor = $nextLevel->xfactor;
-
-                // Unlock new track if available
-                if (!empty($nextLevel->track_name)) {
-                    $tracks = $progression->tracks_unlocked ?? [];
-                    if (!in_array($nextLevel->track_name, $tracks)) {
-                        $tracks[] = $nextLevel->track_name;
-                        $progression->tracks_unlocked = $tracks;
-                        $newTrack = $nextLevel->track_name;
-                    }
-                }
-
-                // Unlock new skill if available
-                if (!empty($nextLevel->skill_name)) {
-                    $skills = $progression->skills_acquired ?? [];
-                    if (!in_array($nextLevel->skill_name, $skills)) {
-                        $skills[] = $nextLevel->skill_name;
-                        $progression->skills_acquired = $skills;
-                        $newSkill = $nextLevel->skill_name;
-                    }
-                }
-            } else {
-                break;
-            }
-        }
-
-        $progression->save();
-
-        return response()->json([
-            'status' => 1,
-            'message' => 'XP updated successfully.',
-            'level' => $progression->level,
-            'current_xp' => $progression->current_xp,
-            'tracks_unlocked' => $progression->tracks_unlocked,
-            'skills_acquired' => $progression->skills_acquired,
-            'isLevelup' => $isLevelup, // New parameter
-            'new_track' => $isLevelup ? $newTrack : null, // New track only if level-up
-            'new_skill' => $isLevelup ? $newSkill : null, // New skill only if level-up
-            'new_xfactor' => $isLevelup ? $newXFactor : null, // XFactor only if level-up
-            'next_level_xp' => $nextLevelXP, // Always pass XP required for next level
-        ]);
     }
 
 
