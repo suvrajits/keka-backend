@@ -29,14 +29,16 @@ class AuthController extends Controller
             // Fetch the current level's xfactor and the next level's required XP
             $currentLevelData = Level::where('level', $progression->level)->first();
             $nextLevelData = Level::where('level', $progression->level + 1)->first();
+            $previousLevelData = Level::where('level', $progression->level - 1)->first();
 
             $currentXFactor = $currentLevelData ? $currentLevelData->xfactor : null;
             $nextLevelXP = $nextLevelData ? $nextLevelData->xp_required : null; // Null if max level reached
+            $beginningXP = $previousLevelData ? $previousLevelData->xp_required : 0; // Default to 0 for level 1
 
             // Generate auth token
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            // Return the response with xfactor and next_level_xp
+            // Return the response with xfactor, next_level_xp, and beginning_xp
             return response()->json([
                 'status' => 1,
                 'access_token' => $token,
@@ -52,8 +54,9 @@ class AuthController extends Controller
                     'current_xp' => $progression->current_xp,
                     'tracks_unlocked' => json_decode($progression->tracks_unlocked),
                     'skills_acquired' => json_decode($progression->skills_acquired),
-                    'xfactor' => $currentXFactor,  // ✅ Added xfactor to response
-                    'next_level_xp' => $nextLevelXP // ✅ Added next_level_xp to response
+                    'xfactor' => $currentXFactor,  // ✅ Added xfactor
+                    'next_level_xp' => $nextLevelXP, // ✅ Added next_level_xp
+                    'beginning_xp' => $beginningXP // ✅ Added beginning_xp
                 ],
             ]);
         } catch (\Firebase\JWT\ExpiredException $e) {
@@ -64,6 +67,7 @@ class AuthController extends Controller
             return response()->json(['status' => 0, 'error' => $e->getMessage()], 400);
         }
     }
+
 
 
 
