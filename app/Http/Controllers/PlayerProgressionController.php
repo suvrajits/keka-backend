@@ -50,30 +50,44 @@ class PlayerProgressionController extends Controller
         $adjustedXP = $validated['xp_gained'] * $currentLevel->xfactor;
         $progression->current_xp += (int)$adjustedXP;
 
+        $isLevelup = 0; // Default is no level-up
+        $newTrack = null;
+        $newSkill = null;
+
+        // Fetch next level XP requirement (whether level-up happens or not)
+        $nextLevelXP = Level::where('level', $progression->level + 1)->value('xp_required');
+
         // Check for level-up
         while ($nextLevel = Level::where('level', $progression->level + 1)->first()) {
             if ($progression->current_xp >= $nextLevel->xp_required) {
                 $progression->current_xp -= $nextLevel->xp_required;
                 $progression->level = $nextLevel->level;
+                $isLevelup = 1; // Level-up happened
+
+                // Update next level XP for the next possible level-up
+                $nextLevelXP = Level::where('level', $progression->level + 1)->value('xp_required');
+
+                // Unlock new track if available
+                if (!empty($nextLevel->track_name)) {
+                    $tracks = $progression->tracks_unlocked ?? [];
+                    if (!in_array($nextLevel->track_name, $tracks)) {
+                        $tracks[] = $nextLevel->track_name;
+                        $progression->tracks_unlocked = $tracks;
+                        $newTrack = $nextLevel->track_name;
+                    }
+                }
+
+                // Unlock new skill if available
+                if (!empty($nextLevel->skill_name)) {
+                    $skills = $progression->skills_acquired ?? [];
+                    if (!in_array($nextLevel->skill_name, $skills)) {
+                        $skills[] = $nextLevel->skill_name;
+                        $progression->skills_acquired = $skills;
+                        $newSkill = $nextLevel->skill_name;
+                    }
+                }
             } else {
                 break;
-            }
-        }
-
-        // Add new track/skill if provided
-        if ($request->filled('new_track')) {
-            $tracks = $progression->tracks_unlocked ?? [];
-            if (!in_array($validated['new_track'], $tracks)) {
-                $tracks[] = $validated['new_track'];
-                $progression->tracks_unlocked = $tracks;
-            }
-        }
-
-        if ($request->filled('new_skill')) {
-            $skills = $progression->skills_acquired ?? [];
-            if (!in_array($validated['new_skill'], $skills)) {
-                $skills[] = $validated['new_skill'];
-                $progression->skills_acquired = $skills;
             }
         }
 
@@ -86,6 +100,10 @@ class PlayerProgressionController extends Controller
             'current_xp' => $progression->current_xp,
             'tracks_unlocked' => $progression->tracks_unlocked,
             'skills_acquired' => $progression->skills_acquired,
+            'isLevelup' => $isLevelup, // New parameter
+            'new_track' => $isLevelup ? $newTrack : null, // New track only if level-up
+            'new_skill' => $isLevelup ? $newSkill : null, // New skill only if level-up
+            'next_level_xp' => $nextLevelXP, // Always pass XP required for next level
         ]);
     }
 }
