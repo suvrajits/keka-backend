@@ -50,9 +50,10 @@ class PlayerProgressionController extends Controller
         $adjustedXP = $validated['xp_gained'] * $currentLevel->xfactor;
         $progression->current_xp += (int)$adjustedXP;
 
-        $isLevelup = 0; // Default is no level-up
+        $isLevelup = 0; // Default: No level-up
         $newTrack = null;
         $newSkill = null;
+        $newXFactor = null; // XFactor of the new level
 
         // Fetch next level XP requirement (whether level-up happens or not)
         $nextLevelXP = Level::where('level', $progression->level + 1)->value('xp_required');
@@ -66,6 +67,9 @@ class PlayerProgressionController extends Controller
 
                 // Update next level XP for the next possible level-up
                 $nextLevelXP = Level::where('level', $progression->level + 1)->value('xp_required');
+
+                // Store new XFactor of the level-up
+                $newXFactor = $nextLevel->xfactor;
 
                 // Unlock new track if available
                 if (!empty($nextLevel->track_name)) {
@@ -103,7 +107,9 @@ class PlayerProgressionController extends Controller
             'isLevelup' => $isLevelup, // New parameter
             'new_track' => $isLevelup ? $newTrack : null, // New track only if level-up
             'new_skill' => $isLevelup ? $newSkill : null, // New skill only if level-up
+            'new_xfactor' => $isLevelup ? $newXFactor : null, // XFactor only if level-up
             'next_level_xp' => $nextLevelXP, // Always pass XP required for next level
         ]);
     }
+
 }
