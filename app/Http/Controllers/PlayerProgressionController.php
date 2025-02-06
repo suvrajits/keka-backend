@@ -71,7 +71,6 @@ class PlayerProgressionController extends Controller
         // Level-up check
         while ($nextLevel = Level::where('level', $progression->level + 1)->first()) {
             if ($progression->current_xp >= $nextLevel->xp_required) {
-                $progression->current_xp -= $nextLevel->xp_required;
                 $progression->level = $nextLevel->level;
                 $isLevelup = 1;
 
