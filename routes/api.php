@@ -19,6 +19,7 @@ Route::get('/test', function () { return response()->json(['message' => 'API is
 Route::get('/task',[TaskController::class,'index']);
 
 Route::post('/login/google', [AuthController::class, 'googleLogin']);
+Route::post('/login/googleIOS', [AuthController::class, 'googleLoginIOS']);
 
 Route::post('/upload-video', [InstagramController::class, 'uploadVideo']);
 

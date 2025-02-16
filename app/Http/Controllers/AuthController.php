@@ -68,6 +68,59 @@ class AuthController extends Controller
         }
     }
 
+    public function googleLoginIOS(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'access_token' => 'required',  // Changed to snake_case
+        ]);
+
+        try {
+            // Authenticate user and retrieve user data
+            $user = $this->authenticateGoogleUserIOS($request->access_token);  //  Function call is correct
+
+            // Ensure player progression exists
+            $progression = $this->getOrCreatePlayerProgression($user->id);
+
+            // Fetch the current level's xfactor and the next level's required XP
+            $currentLevelData = Level::where('level', $progression->level)->first();
+            $nextLevelData = Level::where('level', $progression->level + 1)->first();
+            $previousLevelData = Level::where('level', $progression->level - 1)->first();
+
+            $currentXFactor = $currentLevelData ? $currentLevelData->xfactor : null;
+            $nextLevelXP = $nextLevelData ? $nextLevelData->xp_required : null; // Null if max level reached
+            $beginningXP = $previousLevelData ? $previousLevelData->xp_required : 0; // Default to 0 for level 1
+
+            // Generate auth token
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            // Return the response with xfactor, next_level_xp, and beginning_xp
+            return response()->json([
+                'status' => 1,
+                'access_token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'avatar' => $user->avatar,
+                    'google_id' => $user->google_id,
+                ],
+                'player_progression' => [
+                    'level' => $progression->level,
+                    'current_xp' => $progression->current_xp,
+                    'tracks_unlocked' => json_decode($progression->tracks_unlocked),
+                    'skills_acquired' => json_decode($progression->skills_acquired),
+                    'xfactor' => $currentXFactor,
+                    'next_level_xp' => $nextLevelXP,
+                    'beginning_xp' => $beginningXP
+                ],
+            ]);
+        } catch (\Exception $e) {  // Removed unnecessary JWT exceptions
+            return response()->json(['status' => 0, 'error' => $e->getMessage()], 400);
+        }
+    }
+
+
 
 
 
@@ -105,6 +158,44 @@ class AuthController extends Controller
 
         return $user;
     }
+
+
+    private function authenticateGoogleUserIOS($accessToken)
+    {
+        // Fetch user info from Google's UserInfo API
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer $accessToken"
+        ])->get('https://www.googleapis.com/oauth2/v3/userinfo');
+
+        if ($response->failed()) {
+            throw new \Exception("Invalid or expired access token");
+        }
+
+        $data = $response->json();
+
+        // Extract user info from the response
+        $googleId = $data['sub'];
+        $email = $data['email'] ?? null;
+        $name = $data['name'] ?? null;
+        $avatar = $data['picture'] ?? null;
+
+        // Check if the user already exists
+        $user = User::where('google_id', $googleId)->first();
+
+        if (!$user) {
+            // Create a new user if they don't exist
+            $user = User::create([
+                'google_id' => $googleId,
+                'name' => $name,
+                'email' => $email,
+                'avatar' => $avatar,
+                'password' => bcrypt('default_password'),
+            ]);
+        }
+
+        return $user;
+    }
+
 
     /**
      * Get or create player progression data for a user.
