@@ -68,6 +68,7 @@ class AuthController extends Controller
         }
     }
 
+    /*
     public function googleLoginIOS(Request $request)
     {
         // Validate the request
@@ -119,7 +120,7 @@ class AuthController extends Controller
             return response()->json(['status' => 0, 'error' => $e->getMessage()], 400);
         }
     }
-
+    */
 
 
 
@@ -159,7 +160,88 @@ class AuthController extends Controller
         return $user;
     }
 
+    public function googleLoginIOS(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'access_token' => 'required',  
+        ]);
 
+        try {
+            // Convert Access Token to ID Token
+            $idToken = $this->getIdTokenFromAccessToken($request->access_token);
+
+            if (!$idToken) {
+                return response()->json(['status' => 0, 'error' => 'Failed to retrieve ID token'], 400);
+            }
+
+            // Authenticate user using ID Token
+            $user = $this->authenticateGoogleUserIOS($idToken);  
+
+            // Ensure player progression exists
+            $progression = $this->getOrCreatePlayerProgression($user->id);
+
+            // Fetch the current level's xfactor and the next level's required XP
+            $currentLevelData = Level::where('level', $progression->level)->first();
+            $nextLevelData = Level::where('level', $progression->level + 1)->first();
+            $previousLevelData = Level::where('level', $progression->level - 1)->first();
+
+            $currentXFactor = $currentLevelData ? $currentLevelData->xfactor : null;
+            $nextLevelXP = $nextLevelData ? $nextLevelData->xp_required : null; // Null if max level reached
+            $beginningXP = $previousLevelData ? $previousLevelData->xp_required : 0; // Default to 0 for level 1
+
+            // Generate auth token
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            // Return the response with xfactor, next_level_xp, and beginning_xp
+            return response()->json([
+                'status' => 1,
+                'access_token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'avatar' => $user->avatar,
+                    'google_id' => $user->google_id,
+                ],
+                'player_progression' => [
+                    'level' => $progression->level,
+                    'current_xp' => $progression->current_xp,
+                    'tracks_unlocked' => json_decode($progression->tracks_unlocked),
+                    'skills_acquired' => json_decode($progression->skills_acquired),
+                    'xfactor' => $currentXFactor,
+                    'next_level_xp' => $nextLevelXP,
+                    'beginning_xp' => $beginningXP
+                ],
+            ]);
+        } catch (\Exception $e) {  
+            return response()->json(['status' => 0, 'error' => $e->getMessage()], 400);
+        }
+    }
+
+/**
+ * Convert Access Token to ID Token
+ */
+    private function getIdTokenFromAccessToken($accessToken)
+    {
+        try {
+            $response = Http::get("https://www.googleapis.com/oauth2/v3/tokeninfo", [
+                'access_token' => $accessToken
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['id_token'] ?? null; // Extract id_token
+            }
+        } catch (\Exception $e) {
+            \Log::error("Failed to fetch ID Token: " . $e->getMessage());
+        }
+
+        return null;
+    }
+
+
+   
     private function authenticateGoogleUserIOS($accessToken)
     {
         // Fetch user info from Google's UserInfo API
