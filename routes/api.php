@@ -24,6 +24,8 @@ Route::post('/login/googleIOS', [AuthController::class, 'googleLoginIOS']);
 Route::post('/upload-video', [InstagramController::class, 'uploadVideo']);
 
 Route::post('/score', [LeaderboardController::class, 'submitScore']); // Submit a score
+Route::post('/scoreIOS', [LeaderboardController::class, 'submitScoreIOS']); // Submit a score
+
 Route::get('/leaderboard', [LeaderboardController::class, 'getLeaderboard']); // Fetch the leaderboard
 
 Route::get('/progression', [PlayerProgressionController::class, 'getProgression'])->name('progression.get');

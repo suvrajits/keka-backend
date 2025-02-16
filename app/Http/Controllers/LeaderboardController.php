@@ -93,6 +93,55 @@ class LeaderboardController extends Controller
         }
     }
 
+    public function submitScoreIOS(Request $request)
+    {
+        try {
+            // ✅ Step 1: Validate the request
+            $validated = $request->validate([
+                'google_id' => 'required', // Directly validate Google ID instead of ID token
+                'score' => 'required|integer|min:0',
+            ]);
+
+            // ✅ Step 2: If the score is zero, return a success response with no score submission
+            if ($validated['score'] == 0) {
+                return response()->json([
+                    'status' => 1,
+                    'message' => 'No score submitted.',
+                ], 200);
+            }
+
+            // ✅ Step 3: Check if the user exists using `google_id`
+            $user = User::where('google_id', $validated['google_id'])->first();
+            if (!$user) {
+                return response()->json([
+                    'status' => 1,
+                    'message' => 'No score submitted. User not found.',
+                ], 200);
+            }
+
+            // ✅ Step 4: Create a new score entry
+            $score = Score::create([
+                'user_id' => $user->id, // Use the user ID from the validated user
+                'score' => $validated['score'],
+                'updated_at' => now(),
+            ]);
+
+            // ✅ Step 5: Return a success response
+            return response()->json([
+                'status' => 1, // Success status
+                'message' => 'Score submitted successfully',
+                'user_id' => $user->id, // Include the user ID
+                'score' => $score, // Include the score object
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 1, // Always return status 1
+                'message' => 'No score submitted due to an error.',
+            ], 200);
+        }
+    }
+
     
 
     public function getLeaderboard(Request $request)
