@@ -63,7 +63,7 @@ class PlayerProgressionController extends Controller
         $newTrack = null;
         $newSkill = null;
         $newXFactor = null;
-        $beginningXP = $previousLevel ? $previousLevel->xp_required : 0; // XP at start of current level
+        $beginningXP = $currentLevel ? $currentLevel->xp_required : 0; // XP at start of current level
 
         // Fetch next level XP requirement (whether level-up happens or not)
         $nextLevelXP = Level::where('level', $progression->level + 1)->value('xp_required');
