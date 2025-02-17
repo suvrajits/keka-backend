@@ -46,6 +46,15 @@ class PlayerProgressionController extends Controller
             return response()->json(['status' => 0, 'message' => 'Player progression not found.'], 404);
         }
 
+        // Ensure tracks_unlocked & skills_acquired are decoded JSON arrays
+        $tracks = is_array($progression->tracks_unlocked) 
+            ? $progression->tracks_unlocked 
+            : json_decode($progression->tracks_unlocked, true) ?? [];
+
+        $skills = is_array($progression->skills_acquired) 
+            ? $progression->skills_acquired 
+            : json_decode($progression->skills_acquired, true) ?? [];
+
         // Fetch the current level details
         $currentLevel = Level::where('level', $progression->level)->first();
         $previousLevel = Level::where('level', $progression->level - 1)->first();
@@ -80,29 +89,24 @@ class PlayerProgressionController extends Controller
                 $beginningXP = $nextLevel->xp_required; // Update beginning XP when leveling up
 
                 // Unlock new track if available
-                if (!empty($nextLevel->track_name)) {
-                    $tracks = $progression->tracks_unlocked ?? [];
-                    if (!in_array($nextLevel->track_name, $tracks)) {
-                        $tracks[] = $nextLevel->track_name;
-                        $progression->tracks_unlocked = $tracks;
-                        $newTrack = $nextLevel->track_name;
-                    }
+                if (!empty($nextLevel->track_name) && !in_array($nextLevel->track_name, $tracks)) {
+                    $newTrack = $nextLevel->track_name;
+                    $tracks[] = $newTrack;
                 }
 
                 // Unlock new skill if available
-                if (!empty($nextLevel->skill_name)) {
-                    $skills = $progression->skills_acquired ?? [];
-                    if (!in_array($nextLevel->skill_name, $skills)) {
-                        $skills[] = $nextLevel->skill_name;
-                        $progression->skills_acquired = $skills;
-                        $newSkill = $nextLevel->skill_name;
-                    }
+                if (!empty($nextLevel->skill_name) && !in_array($nextLevel->skill_name, $skills)) {
+                    $newSkill = $nextLevel->skill_name;
+                    $skills[] = $newSkill;
                 }
             } else {
                 break;
             }
         }
 
+        // Ensure data is **saved as JSON**
+        $progression->tracks_unlocked = json_encode($tracks);
+        $progression->skills_acquired = json_encode($skills);
         $progression->save();
 
         return response()->json([
@@ -110,14 +114,15 @@ class PlayerProgressionController extends Controller
             'message' => 'XP updated successfully.',
             'level' => $progression->level,
             'current_xp' => $progression->current_xp,
-            'tracks_unlocked' => $progression->tracks_unlocked,
-            'skills_acquired' => $progression->skills_acquired,
+            'tracks_unlocked' => $tracks,
+            'skills_acquired' => $skills,
             'isLevelup' => $isLevelup,
             'new_track' => $isLevelup ? $newTrack : null,
             'new_skill' => $isLevelup ? $newSkill : null,
             'new_xfactor' => $isLevelup ? $newXFactor : null,
             'next_level_xp' => $nextLevelXP,
-            'beginning_xp' => $beginningXP, // ✅ Added beginning_xp
+            'beginning_xp' => $beginningXP,
         ]);
     }
+
 }
