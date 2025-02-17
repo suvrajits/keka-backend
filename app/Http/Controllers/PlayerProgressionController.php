@@ -81,10 +81,14 @@ class PlayerProgressionController extends Controller
 
                 // Unlock new track if available
                 if (!empty($nextLevel->track_name)) {
-                    $tracks = $progression->tracks_unlocked ?? [];
+                    // Ensure tracks_unlocked is properly decoded as an array
+                    $tracks = is_array($progression->tracks_unlocked) 
+                        ? $progression->tracks_unlocked 
+                        : json_decode($progression->tracks_unlocked, true) ?? [];
+                
                     if (!in_array($nextLevel->track_name, $tracks)) {
                         $tracks[] = $nextLevel->track_name;
-                        $progression->tracks_unlocked = $tracks;
+                        $progression->tracks_unlocked = json_encode($tracks); // Save as JSON string
                         $newTrack = $nextLevel->track_name;
                     }
                 }
