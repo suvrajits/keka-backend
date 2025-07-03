@@ -89,6 +89,7 @@ class LeaderboardController extends Controller
             return response()->json([
                 'status' => 1, // Always return status 1
                 'message' => 'No score submitted.',
+                'error' => $e->getMessage(),
             ], 200);
         }
     }
