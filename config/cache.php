@@ -72,10 +72,25 @@ return [
         ],
 
         'redis' => [
-            'driver' => 'redis',
-            'connection' => env('REDIS_CACHE_CONNECTION', 'cache'),
-            'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
+            'client' => env('REDIS_CLIENT', 'phpredis'), // or 'predis'
+
+            'default' => [
+                'url' => env('REDIS_URL'), // Optional if connecting via URL
+                'host' => env('REDIS_HOST', '127.0.0.1'),
+                'password' => env('REDIS_PASSWORD', null), // Null if no password
+                'port' => env('REDIS_PORT', 6379),
+                'database' => env('REDIS_DB', 0), // Default database
+            ],
+
+            'cache' => [
+                'url' => env('REDIS_URL'), // Optional if connecting via URL
+                'host' => env('REDIS_HOST', '127.0.0.1'),
+                'password' => env('REDIS_PASSWORD', null), // Null if no password
+                'port' => env('REDIS_PORT', 6379),
+                'database' => env('REDIS_CACHE_DB', 1), // Separate database for cache
+            ],
         ],
+
 
         'dynamodb' => [
             'driver' => 'dynamodb',
